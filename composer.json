@@ -1,0 +1,53 @@
+{
+    "name": "kafkiansky/binary",
+    "description": "Tool for writing/reading bytes in any order.",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "kafkiansky",
+            "email": "vadimzanfir@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "azjezz/psl": "^2.9"
+    },
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.41",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^3.8",
+        "vimeo/psalm": "^5.18"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "Kafkiansky\\Binary\\": "src/"
+        },
+        "files": [
+            "src/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Kafkiansky\\Binary\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "phpcbf": "./vendor/bin/phpcbf -p --standard=phpcs.xml src",
+        "phpcs": "./vendor/bin/phpcs --standard=phpcs.xml",
+        "phpunit": "./vendor/bin/phpunit --testdox --do-not-cache",
+        "psalm": "./vendor/bin/psalm --no-cache",
+        "test": [
+            "@phpunit",
+            "@psalm",
+            "@phpcs"
+        ]
+    }
+}
