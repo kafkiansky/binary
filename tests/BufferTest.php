@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class BufferTest extends TestCase
 {
-    public static function fixtures(): \Generator
+    public static function fixtures(): iterable
     {
         yield 'int8' => [
             fn (Buffer $buffer, int $value): Buffer => $buffer->writeInt8($value),
