@@ -9,5 +9,5 @@ namespace Kafkiansky\Binary;
  */
 interface Writer
 {
-    public function write(string $bytes): void;
+    public function write(string $bytes): self;
 }

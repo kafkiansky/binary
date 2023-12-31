@@ -16,15 +16,16 @@ use Psl\Type;
  * @psalm-type Int32 = int<-2147483648, 2147483647>
  * @psalm-type Uint32 = int<0, 4294967295>
  * @psalm-type Int64 = int<min, max>
- * @psalm-type Uint64 = int<0, 18446744073709551615>
+ * @psalm-type Uint64 = int<0, max>
  *
  * @psalm-inheritors BigEndian|LittleEndian
  */
 abstract class Endianness
 {
-    final private function __construct(
-        private readonly bool $isLittleEndian,
-    ) {
+    private static ?bool $isLittleEndian = null;
+
+    final private function __construct()
+    {
     }
 
     /**
@@ -73,8 +74,14 @@ abstract class Endianness
      */
     abstract public function writeUint64(Writer $writer, int $value): void;
 
+    abstract public function writeFloat(Writer $writer, float $value): void;
+
+    abstract public function writeDouble(Writer $writer, float $value): void;
+
     /**
      * @return Int8
+     *
+     * @throws BinaryException
      */
     final public function readInt8(Reader $reader): int
     {
@@ -83,6 +90,8 @@ abstract class Endianness
 
     /**
      * @return Uint8
+     *
+     * @throws BinaryException
      */
     final public function readUint8(Reader $reader): int
     {
@@ -91,49 +100,83 @@ abstract class Endianness
 
     /**
      * @return Int16
+     *
+     * @throws BinaryException
      */
     abstract public function readInt16(Reader $reader): int;
 
     /**
      * @return Uint16
+     *
+     * @throws BinaryException
      */
     abstract public function readUint16(Reader $reader): int;
 
     /**
      * @return Int32
+     *
+     * @throws BinaryException
      */
     abstract public function readInt32(Reader $reader): int;
 
     /**
      * @return Uint32
+     *
+     * @throws BinaryException
      */
     abstract public function readUint32(Reader $reader): int;
 
     /**
      * @return Int64
+     *
+     * @throws BinaryException
      */
     abstract public function readInt64(Reader $reader): int;
 
     /**
      * @return Uint64
+     *
+     * @throws BinaryException
      */
     abstract public function readUint64(Reader $reader): int;
 
+    /**
+     * @throws BinaryException
+     */
+    abstract public function readFloat(Reader $reader): float;
+
+    /**
+     * @throws BinaryException
+     */
+    abstract public function readDouble(Reader $reader): float;
+
+    /**
+     * @throws BinaryException
+     */
     final public static function network(): BigEndian
     {
         return self::big();
     }
 
+    /**
+     * @throws BinaryException
+     */
     final public static function native(): static
     {
         return self::createEndianness();
     }
 
+    /**
+     * @throws BinaryException
+     */
     final public static function big(): BigEndian
     {
         return self::createEndianness(BigEndian::class);
     }
 
+    /**
+     * @throws BinaryException
+     */
     final public static function little(): LittleEndian
     {
         return self::createEndianness(LittleEndian::class);
@@ -143,14 +186,16 @@ abstract class Endianness
      * @psalm-template T of Endianness
      * @psalm-param ?class-string<T> $endian
      * @psalm-return (T is null ? (LittleEndian|BigEndian) : T)
+     *
+     * @throws BinaryException
      */
     private static function createEndianness(?string $endian = null)
     {
-        $isLittleEndian = 1 === namespace\unpack('S', "\x01\x00", Type\union(Type\literal_scalar(0), Type\literal_scalar(1)));
+        self::$isLittleEndian ??= 1 === namespace\unpack('S', "\x01\x00", Type\union(Type\literal_scalar(0), Type\literal_scalar(1)));
 
-        $endian ??= $isLittleEndian ? LittleEndian::class : BigEndian::class;
+        $endian ??= self::$isLittleEndian ? LittleEndian::class : BigEndian::class;
 
-        return new $endian($isLittleEndian);
+        return new $endian();
     }
 
     /**
@@ -169,6 +214,8 @@ abstract class Endianness
      * @param non-empty-string $format
      * @param Type\TypeInterface<T> $type
      *
+     * @throws BinaryException
+     *
      * @return T
      */
     final protected function readEndianness(string $bytes, string $format, Type\TypeInterface $type)
@@ -184,10 +231,11 @@ abstract class Endianness
     private function bytesToEndianness(string $bytes): string
     {
         $reverse = match ($this::class) {
-            LittleEndian::class => !$this->isLittleEndian,
-            BigEndian::class => $this->isLittleEndian,
+            LittleEndian::class => !self::$isLittleEndian,
+            BigEndian::class => self::$isLittleEndian,
         };
 
+        /** @var non-empty-string */
         return $reverse ? strrev($bytes) : $bytes;
     }
 }

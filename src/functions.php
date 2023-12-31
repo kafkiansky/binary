@@ -24,11 +24,13 @@ function pack(string $format, mixed $value): string
  * @param non-empty-string      $bytes
  * @param Type\TypeInterface<T> $type
  *
+ * @throws BinaryException
+ *
  * @return T
  */
 function unpack(string $format, string $bytes, Type\TypeInterface $type)
 {
-    $value = \unpack($format, $bytes) ?: throw new \RuntimeException('Cannot unpack bytes.');
+    $value = \unpack($format, $bytes) ?: throw BinaryException::whenBytesCannotBeUnpacked($bytes, $format);
 
     return $type->coerce($value[1] ?? 0);
 }

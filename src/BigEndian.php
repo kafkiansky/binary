@@ -59,6 +59,16 @@ final class BigEndian extends Endianness
         $writer->write(namespace\pack('J', $value));
     }
 
+    public function writeFloat(Writer $writer, float $value): void
+    {
+        $writer->write(namespace\pack('G', $value));
+    }
+
+    public function writeDouble(Writer $writer, float $value): void
+    {
+        $writer->write(namespace\pack('E', $value));
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -105,5 +115,21 @@ final class BigEndian extends Endianness
     public function readUint64(Reader $reader): int
     {
         return namespace\unpack('J', $reader->read(8), Type\uint());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readFloat(Reader $reader): float
+    {
+        return namespace\unpack('G', $reader->read(4), Type\f32());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readDouble(Reader $reader): float
+    {
+        return namespace\unpack('E', $reader->read(8), Type\f64());
     }
 }

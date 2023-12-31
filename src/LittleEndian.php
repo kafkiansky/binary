@@ -59,6 +59,16 @@ final class LittleEndian extends Endianness
         $writer->write(namespace\pack('P', $value));
     }
 
+    public function writeFloat(Writer $writer, float $value): void
+    {
+        $writer->write(namespace\pack('g', $value));
+    }
+
+    public function writeDouble(Writer $writer, float $value): void
+    {
+        $writer->write(namespace\pack('e', $value));
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -105,5 +115,21 @@ final class LittleEndian extends Endianness
     public function readUint64(Reader $reader): int
     {
         return namespace\unpack('P', $reader->read(8), Type\uint());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readFloat(Reader $reader): float
+    {
+        return namespace\unpack('g', $reader->read(4), Type\f32());
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function readDouble(Reader $reader): float
+    {
+        return namespace\unpack('e', $reader->read(8), Type\f64());
     }
 }
