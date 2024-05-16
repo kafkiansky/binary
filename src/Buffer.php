@@ -97,6 +97,34 @@ final class Buffer implements
         return $this;
     }
 
+    final public function writeVarInt(int $number): self
+    {
+        $zigZagNumber = $number << 1;
+        if ($number < 0) {
+            $zigZagNumber = ~$zigZagNumber;
+        }
+
+        return $this->writeVarUint($zigZagNumber);
+    }
+
+    final public function writeVarUint(int $number): self
+    {
+        $bytes = [];
+
+        do {
+            $byte = $number & 127;
+            $number >>= 7;
+            if ($number > 0) {
+                $byte |= 128;
+            }
+            $bytes[] = $byte;
+        } while ($number > 0);
+
+        $this->write(namespace\pack('C*', $bytes));
+
+        return $this;
+    }
+
     public function writeFloat(float $value): self
     {
         $this->endianness->writeFloat($this, $value);
@@ -173,6 +201,45 @@ final class Buffer implements
     public function readUint64(): int
     {
         return $this->endianness->readUint64($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    final public function readVarInt(): int
+    {
+        $zigZagNumber = $this->readVarUint();
+
+        $number = $zigZagNumber >> 1;
+
+        if ($zigZagNumber & 1) {
+            $number = ~$number;
+        }
+
+        return $number;
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    final public function readVarUint(): int
+    {
+        $number = $shift = $bytesRead = 0;
+
+        foreach (str_split($this->bytes) as $byte) {
+            $number |= (ord($byte) & 127) << $shift;
+            $shift += 7;
+            $bytesRead++;
+            if (!(ord($byte) & 128)) {
+                break;
+            }
+        }
+
+        if (0 < $bytesRead) {
+            $this->read($bytesRead);
+        }
+
+        return $number;
     }
 
     /**

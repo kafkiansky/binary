@@ -15,7 +15,11 @@ use Psl\Type;
  */
 function pack(string $format, mixed $value): string
 {
-    return Type\non_empty_string()->coerce(\pack($format, $value));
+    if (!\is_iterable($value)) {
+        $value = [$value];
+    }
+
+    return Type\non_empty_string()->coerce(\pack($format, ...$value));
 }
 
 /**
