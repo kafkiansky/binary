@@ -72,6 +72,48 @@ final class BufferTest extends TestCase
             8,
         ];
 
+        yield 'varint/1' => [
+            fn (Buffer $buffer, int $value): Buffer => $buffer->writeVarInt($value),
+            fn (Buffer $buffer): int => $buffer->readVarInt(),
+            10,
+            1,
+        ];
+
+        yield 'varint/2' => [
+            fn (Buffer $buffer, int $value): Buffer => $buffer->writeVarInt($value),
+            fn (Buffer $buffer): int => $buffer->readVarInt(),
+            300,
+            2,
+        ];
+
+        yield 'varint/5' => [
+            fn (Buffer $buffer, int $value): Buffer => $buffer->writeVarInt($value),
+            fn (Buffer $buffer): int => $buffer->readVarInt(),
+            2 ** 32,
+            5,
+        ];
+
+        yield 'varuint/1' => [
+            fn (Buffer $buffer, int $value): Buffer => $buffer->writeVarUint($value),
+            fn (Buffer $buffer): int => $buffer->readVarUint(),
+            10,
+            1,
+        ];
+
+        yield 'varuint/2' => [
+            fn (Buffer $buffer, int $value): Buffer => $buffer->writeVarUint($value),
+            fn (Buffer $buffer): int => $buffer->readVarUint(),
+            300,
+            2,
+        ];
+
+        yield 'varuint/5' => [
+            fn (Buffer $buffer, int $value): Buffer => $buffer->writeVarUint($value),
+            fn (Buffer $buffer): int => $buffer->readVarUint(),
+            2 ** 32,
+            5,
+        ];
+
         yield 'float' => [
             fn (Buffer $buffer, float $value): Buffer => $buffer->writeFloat($value),
             fn (Buffer $buffer): float => $buffer->readFloat(),
