@@ -7,7 +7,7 @@ namespace Kafkiansky\Binary;
 /**
  * @api
  */
-interface Reader
+interface ReadBytes
 {
     /**
      * @param positive-int $n
