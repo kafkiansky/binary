@@ -7,7 +7,7 @@ namespace Kafkiansky\Binary;
 /**
  * @api
  */
-interface Writer
+interface WriteBytes
 {
     public function write(string $bytes): self;
 }

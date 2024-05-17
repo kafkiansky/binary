@@ -31,7 +31,7 @@ abstract class Endianness
     /**
      * @param Int8 $value
      */
-    final public function writeInt8(Writer $writer, int $value): void
+    final public function writeInt8(WriteBytes $writer, int $value): void
     {
         $writer->write(namespace\pack('c', $value));
     }
@@ -39,7 +39,7 @@ abstract class Endianness
     /**
      * @param Uint8 $value
      */
-    final public function writeUint8(Writer $writer, int $value): void
+    final public function writeUint8(WriteBytes $writer, int $value): void
     {
         $writer->write(namespace\pack('C', $value));
     }
@@ -47,45 +47,55 @@ abstract class Endianness
     /**
      * @param Int16 $value
      */
-    abstract public function writeInt16(Writer $writer, int $value): void;
+    abstract public function writeInt16(WriteBytes $writer, int $value): void;
 
     /**
      * @param Uint16 $value
      */
-    abstract public function writeUint16(Writer $writer, int $value): void;
+    abstract public function writeUint16(WriteBytes $writer, int $value): void;
 
     /**
      * @param Int32 $value
      */
-    abstract public function writeInt32(Writer $writer, int $value): void;
+    abstract public function writeInt32(WriteBytes $writer, int $value): void;
 
     /**
      * @param Uint32 $value
      */
-    abstract public function writeUint32(Writer $writer, int $value): void;
+    abstract public function writeUint32(WriteBytes $writer, int $value): void;
 
     /**
      * @param Int64 $value
      */
-    abstract public function writeInt64(Writer $writer, int $value): void;
+    abstract public function writeInt64(WriteBytes $writer, int $value): void;
 
     /**
      * @param Uint64 $value
      */
-    abstract public function writeUint64(Writer $writer, int $value): void;
+    abstract public function writeUint64(WriteBytes $writer, int $value): void;
 
-    abstract public function writeFloat(Writer $writer, float $value): void;
+    abstract public function writeFloat(WriteBytes $writer, float $value): void;
 
-    abstract public function writeDouble(Writer $writer, float $value): void;
+    abstract public function writeDouble(WriteBytes $writer, float $value): void;
 
     /**
      * @return Int8
      *
      * @throws BinaryException
      */
-    final public function readInt8(Reader $reader): int
+    final public function readInt8(ReadBytes $reader): int
     {
         return namespace\unpack('c', $reader->read(1), Type\i8());
+    }
+
+    /**
+     * @return Int8
+     *
+     * @throws BinaryException
+     */
+    final public function consumeInt8(ConsumeBytes $consumer): int
+    {
+        return namespace\unpack('c', $consumer->consume(1), Type\i8());
     }
 
     /**
@@ -93,9 +103,19 @@ abstract class Endianness
      *
      * @throws BinaryException
      */
-    final public function readUint8(Reader $reader): int
+    final public function readUint8(ReadBytes $reader): int
     {
         return namespace\unpack('C', $reader->read(1), Type\u8());
+    }
+
+    /**
+     * @return Uint8
+     *
+     * @throws BinaryException
+     */
+    final public function consumeUint8(ConsumeBytes $consumer): int
+    {
+        return namespace\unpack('C', $consumer->consume(1), Type\u8());
     }
 
     /**
@@ -103,52 +123,104 @@ abstract class Endianness
      *
      * @throws BinaryException
      */
-    abstract public function readInt16(Reader $reader): int;
+    abstract public function readInt16(ReadBytes $reader): int;
+
+    /**
+     * @return Int16
+     *
+     * @throws BinaryException
+     */
+    abstract public function consumeInt16(ConsumeBytes $consumer): int;
 
     /**
      * @return Uint16
      *
      * @throws BinaryException
      */
-    abstract public function readUint16(Reader $reader): int;
+    abstract public function readUint16(ReadBytes $reader): int;
+
+    /**
+     * @return Uint16
+     *
+     * @throws BinaryException
+     */
+    abstract public function consumeUint16(ConsumeBytes $consumer): int;
 
     /**
      * @return Int32
      *
      * @throws BinaryException
      */
-    abstract public function readInt32(Reader $reader): int;
+    abstract public function readInt32(ReadBytes $reader): int;
+
+    /**
+     * @return Int32
+     *
+     * @throws BinaryException
+     */
+    abstract public function consumeInt32(ConsumeBytes $consumer): int;
 
     /**
      * @return Uint32
      *
      * @throws BinaryException
      */
-    abstract public function readUint32(Reader $reader): int;
+    abstract public function readUint32(ReadBytes $reader): int;
+
+    /**
+     * @return Uint32
+     *
+     * @throws BinaryException
+     */
+    abstract public function consumeUint32(ConsumeBytes $consumer): int;
 
     /**
      * @return Int64
      *
      * @throws BinaryException
      */
-    abstract public function readInt64(Reader $reader): int;
+    abstract public function readInt64(ReadBytes $reader): int;
+
+    /**
+     * @return Int64
+     *
+     * @throws BinaryException
+     */
+    abstract public function consumeInt64(ConsumeBytes $consumer): int;
 
     /**
      * @return Uint64
      *
      * @throws BinaryException
      */
-    abstract public function readUint64(Reader $reader): int;
+    abstract public function readUint64(ReadBytes $reader): int;
+
+    /**
+     * @return Uint64
+     *
+     * @throws BinaryException
+     */
+    abstract public function consumeUint64(ConsumeBytes $consumer): int;
 
     /**
      * @throws BinaryException
      */
-    abstract public function readFloat(Reader $reader): float;
+    abstract public function readFloat(ReadBytes $reader): float;
 
     /**
      * @throws BinaryException
      */
-    abstract public function readDouble(Reader $reader): float;
+    abstract public function consumeFloat(ConsumeBytes $consumer): float;
+
+    /**
+     * @throws BinaryException
+     */
+    abstract public function readDouble(ReadBytes $reader): float;
+
+    /**
+     * @throws BinaryException
+     */
+    abstract public function consumeDouble(ConsumeBytes $consumer): float;
 
     /**
      * @throws BinaryException
@@ -203,7 +275,7 @@ abstract class Endianness
      * @param non-empty-string $format
      * @param T $value
      */
-    final protected function writeEndianness(Writer $writer, string $format, mixed $value): void
+    final protected function writeEndianness(WriteBytes $writer, string $format, mixed $value): void
     {
         $writer->write($this->bytesToEndianness(namespace\pack($format, $value)));
     }

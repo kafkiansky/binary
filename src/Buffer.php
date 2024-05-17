@@ -10,8 +10,9 @@ use Psl\Type;
  * @api
  */
 final class Buffer implements
-    Writer,
-    Reader,
+    WriteBytes,
+    ReadBytes,
+    ConsumeBytes,
     \Stringable,
     \Countable
 {
@@ -150,9 +151,25 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    public function consumeInt8(): int
+    {
+        return $this->endianness->consumeInt8($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
     public function readUint8(): int
     {
         return $this->endianness->readUint8($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    public function consumeUint8(): int
+    {
+        return $this->endianness->consumeUint8($this);
     }
 
     /**
@@ -166,9 +183,25 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    public function consumeInt16(): int
+    {
+        return $this->endianness->consumeInt16($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
     public function readUint16(): int
     {
         return $this->endianness->readUint16($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    public function consumeUint16(): int
+    {
+        return $this->endianness->consumeUint16($this);
     }
 
     /**
@@ -182,9 +215,25 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    public function consumeInt32(): int
+    {
+        return $this->endianness->consumeInt32($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
     public function readUint32(): int
     {
         return $this->endianness->readUint32($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    public function consumeUint32(): int
+    {
+        return $this->endianness->consumeUint32($this);
     }
 
     /**
@@ -198,6 +247,14 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    public function consumeInt64(): int
+    {
+        return $this->endianness->consumeInt64($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
     public function readUint64(): int
     {
         return $this->endianness->readUint64($this);
@@ -206,15 +263,28 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    public function consumeUint64(): int
+    {
+        return $this->endianness->consumeUint64($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    final public function consumeVarInt(): int
+    {
+        [$number, $read] = $this->doReadVarInt();
+
+        if ($read > 0) {
+            $this->consume($read);
+        }
+
+        return $number;
+    }
+
     final public function readVarInt(): int
     {
-        $zigZagNumber = $this->readVarUint();
-
-        $number = $zigZagNumber >> 1;
-
-        if ($zigZagNumber & 1) {
-            $number = ~$number;
-        }
+        [$number, ] = $this->doReadVarInt();
 
         return $number;
     }
@@ -222,22 +292,20 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    final public function consumeVarUint(): int
+    {
+        [$number, $read] = $this->doReadVarUint();
+
+        if ($read > 0) {
+            $this->consume($read);
+        }
+
+        return $number;
+    }
+
     final public function readVarUint(): int
     {
-        $number = $shift = $bytesRead = 0;
-
-        foreach (str_split($this->bytes) as $byte) {
-            $number |= (ord($byte) & 127) << $shift;
-            $shift += 7;
-            $bytesRead++;
-            if (!(ord($byte) & 128)) {
-                break;
-            }
-        }
-
-        if (0 < $bytesRead) {
-            $this->read($bytesRead);
-        }
+        [$number, ] = $this->doReadVarUint();
 
         return $number;
     }
@@ -253,9 +321,25 @@ final class Buffer implements
     /**
      * @throws BinaryException
      */
+    public function consumeFloat(): float
+    {
+        return $this->endianness->consumeFloat($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
     public function readDouble(): float
     {
         return $this->endianness->readDouble($this);
+    }
+
+    /**
+     * @throws BinaryException
+     */
+    public function consumeDouble(): float
+    {
+        return $this->endianness->consumeDouble($this);
     }
 
     public function reset(): string
@@ -263,6 +347,24 @@ final class Buffer implements
         [$bytes, $this->bytes, $this->size] = [$this->bytes, '', 0];
 
         return $bytes;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function consume(int $n): string
+    {
+        if ($n > $this->size) {
+            throw BinaryException::whenNotEnoughBytesToRead($n, $this->size);
+        }
+
+        /** @psalm-var non-empty-string $buf */
+        $buf = substr($this->bytes, 0, $n);
+        $this->bytes = substr($this->bytes, $n);
+        /** @psalm-suppress InvalidPropertyAssignmentValue No errors here. */
+        $this->size -= $n;
+
+        return $buf;
     }
 
     /**
@@ -276,9 +378,6 @@ final class Buffer implements
 
         /** @psalm-var non-empty-string $buf */
         $buf = substr($this->bytes, 0, $n);
-        $this->bytes = substr($this->bytes, $n);
-        /** @psalm-suppress InvalidPropertyAssignmentValue No errors here. */
-        $this->size -= $n;
 
         return $buf;
     }
@@ -302,5 +401,40 @@ final class Buffer implements
     public function count(): int
     {
         return $this->size;
+    }
+
+    /**
+     * @return array{int, int}
+     */
+    private function doReadVarInt(): array
+    {
+        [$zigZagNumber, $read] = $this->doReadVarUint();
+
+        $number = $zigZagNumber >> 1;
+
+        if ($zigZagNumber & 1) {
+            $number = ~$number;
+        }
+
+        return [$number, $read];
+    }
+
+    /**
+     * @return array{int, int}
+     */
+    private function doReadVarUint(): array
+    {
+        $number = $shift = $bytesRead = 0;
+
+        foreach (str_split($this->bytes) as $byte) {
+            $number |= (ord($byte) & 127) << $shift;
+            $shift += 7;
+            $bytesRead++;
+            if (!(ord($byte) & 128)) {
+                break;
+            }
+        }
+
+        return [$number, $bytesRead];
     }
 }
